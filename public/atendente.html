@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="ie-edge">
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.js"></script>
+        <link rel="stylesheet" href="style.css">
+        <title>Primeira Página</title>
+    </head>
+    <body>
+        <div id="divUsuario">
+            <form id="formUsuario">
+                <img id="icon" src="icon.png">
+                <p>Atendente</p>
+                <input type="text" name="username" placeholder="Digite aqui seu nickname">
+                <button type="submit">Entrar no chat</button>
+            </form>
+        </div>
+
+        <div id="divListaDeEspera" hidden>
+            <form id="formCliente">
+                <p id="selecaoCliente" ></p>
+                <button type="submit">Iniciar atendimento</button>
+            </form>            
+        </div>
+        
+        <div id="formChat" hidden>                       
+            <form id="chat">
+                
+                <p id="tituloUsuario"></p>           
+                <div class="messages" ></div>
+                <div>
+                    <input style="width: 450px" type="text" name="message" placeholder="Digite aqui sua mensagem">
+                    <button style="width: 50px" type="submit">Enviar</button>
+                </div>
+                
+            </form>
+            <form id="formFecharAtendimento">
+                <button id="btnFecharAtendimento" style="background-color: red">Fechar atendimento</button>
+            </form>
+            <audio id="wavBeep">
+                <source src="beep-msg.wav" type="audio/wav">
+            </audio>
+        </div>
+        
+        <script type="text/javascript">
+            var i=0;
+            var username="";
+            var socket = io('http://10.0.0.245:45000');
+
+            const audio = document.getElementById("wavBeep");
+
+            var clienteDaVez;
+
+            socket.on('previousMessages', function(messages){
+                i=messages.length;
+                for(message of messages){
+                    renderMessage(message);
+                }
+                $('.messages').animate({
+                
+                scrollTop: $('.messages').scroll().height() * i // aqui introduz o numero de px que quer no scroll, neste caso é a altura da propria div, o que faz com que venha para o fim
+                }, 100);
+            });
+            
+            socket.on('receivedMessage' , function(message){
+                renderMessage(message);
+            });
+            
+            socket.on('filaDeEsperaRecebida', (cliente)=>{                        
+                $('#selecaoCliente').html("");
+                if(cliente){
+                    $('#selecaoCliente').html('O próximo cliente da fila é: <strong>'+cliente+'</strong>');
+                }else{
+                    $('#selecaoCliente').html('<strong>Não tem clientes na fila neste momento!</strong>');  
+                }
+                                     
+                
+            });
+
+            socket.on('iniciarAtendimento' , function(atendente){
+                
+                $('#divListadeEspera').hide();
+                $('#formChat').show();
+                $('.messages').html("")                
+            });
+
+            function renderMessage(message){
+                i=i+1;
+                $('.messages').append('<div class="message"><strong>'+ message.author+'</strong>:<br>'+ message.message +'</div><br>');
+                $('.messages').animate({
+            
+                scrollTop: $('.messages').scroll().height() * i // aqui introduz o numero de px que quer no scroll, neste caso é a altura da propria div, o que faz com que venha para o fim
+                }, 100);
+
+                audio.play();
+            };
+
+            function renderMyMessage(message){
+                i=i+1;
+                $('.messages').append('<div class="myMessage"><strong>'+ message.author+'</strong>:<br>'+ message.message +'</div><br>');
+                $('.messages').animate({
+            
+                scrollTop: $('.messages').scroll().height() * i // aqui introduz o numero de px que quer no scroll, neste caso é a altura da propria div, o que faz com que venha para o fim
+                }, 100);
+            };
+
+            $('#formCliente').submit(function(event){
+                event.preventDefault();
+                let cliente=$('select[name=selecaoCliente]').val();
+                console.log("Cliente atendido: "+cliente);
+                $('#formChat').show();
+                $('#divListaDeEspera').hide();
+                let objAtendimento={
+                    nome_atendente: username,
+                    nome_cliente: cliente
+                }
+                socket.emit('atender',username);
+            });
+
+            $('#formUsuario').submit(function(event){
+                event.preventDefault();
+
+                var author = $('input[name=username]').val();
+                username=author;
+                $('#tituloUsuario').html(`Você está logado como: <strong>${username}</strong>`);
+                socket.emit('ficarDisponivelNoAtendimento',username);
+                $('#divListaDeEspera').show();
+                $('#divUsuario').hide();
+            });
+
+            $('#formFecharAtendimento').submit((event)=>{
+                event.preventDefault();
+                $('#formChat').hide();
+                $('.messages').html("");
+                $('#divListaDeEspera').show();
+                let finalizar ={
+                    cliente: clienteDaVez,
+                    room: socket.id
+                }
+                //socket.to(`${socket.id}`).emit('encerrarAtendimento', finalizar);
+                socket.emit('encerrarAtendimento',finalizar);
+            });
+
+            $('#chat').submit(function(event){
+                event.preventDefault();              
+                var message = $('input[name=message]').val();  
+                $('input[name=message]').val("");             
+
+                if(username.length && message.length){
+                    var messageObject={
+                        author: username,
+                        message: message,
+                        room: socket.id
+                    }
+                };
+                
+
+                renderMyMessage(messageObject);
+                i=i+1;
+                console.log(i);
+                $('.messages').animate({
+                
+                scrollTop: $('.messages').scroll().height() * i // aqui introduz o numero de px que quer no scroll, neste caso é a altura da propria div, o que faz com que venha para o fim
+                }, 100);
+
+                socket.emit('sendMessage', messageObject);
+            })
+        </script>
+    </body>
+</html>
+
+
