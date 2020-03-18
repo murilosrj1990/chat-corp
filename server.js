@@ -52,18 +52,18 @@ io.on('connection', socket =>{
         clientesSendoAtendidos.push(cliente);
 
         clientesSendoAtendidos.forEach(element => {
-            console.log("Fila de de clientes sendo atendidos: "+element);
+            console.log("Fila de de clientes sendo atendidos: "+element.nome_cliente);
         });
 
         filaEspera.forEach(element => {
-            console.log("Fila de espera: "+element);
+            console.log("Fila de espera: "+element.nome_cliente);
         });
                
         if(cliente != null){
             cliente.room=`${socket.id}`;
             cliente.socket.join(`${socket.id}`);
             console.log("Lista de clientes antes de atender: "+filaEspera.toString());
-            console.log("Cliente " +cliente.nome_cliente+" foi atendido. O socket dele é"+cliente.socket.toString());
+            console.log("Cliente " +cliente.nome_cliente+" foi atendido. O socket dele é"+cliente.socket.id);
             console.log("Lista de clientes depois de atender: "+filaEspera.toString());
             let infoAtendimento={
                 nome_atendente: nomeAtendendente,
@@ -152,7 +152,6 @@ io.on('connection', socket =>{
     function atualizarListaDeEsperaNosAtendentes(){
         if(filaEspera.length>0){
             let clienteDaVez=filaEspera[0].nome_cliente;
-            console.log(clienteDaVez);
             atendentesDisponiveis.forEach(atendente => {
                 //enviar nome dos clientes na lista de espera;
                 atendente.socket.emit('filaDeEsperaRecebida',clienteDaVez);
@@ -167,7 +166,6 @@ io.on('connection', socket =>{
 
     function pesquisarClientePorNome(nomeCliente){
         filaEspera.forEach(cliente => {
-            console.log(cliente.nome_cliente+" " + cliente.socket);
             if(cliente.nome_cliente===nomeCliente){
                 return cliente;
             }
@@ -177,9 +175,8 @@ io.on('connection', socket =>{
 
     function pesquisarClienteSendoAtendidoPorNome(nomeCliente){
         clientesSendoAtendidos.forEach(cliente => {
-            console.log("Lista clientes atendidos: "+cliente.nome_cliente+" " + cliente.socket);
             if(cliente.nome_cliente===nomeCliente){
-                console.log("Lista clientes atendidos: "+cliente.nome_cliente+" " + cliente.socket);
+                console.log("Lista clientes atendidos: "+cliente.nome_cliente+" " + cliente.socket.id);
                 return cliente;
             }else{
                 return null;
