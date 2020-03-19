@@ -32,8 +32,8 @@ body, html {
 }
 
 .messages {
-    height: 320px;
-    overflow: scroll; 
+    height: 80vh;
+    overflow-y: scroll; 
 }
 
 #icon {
