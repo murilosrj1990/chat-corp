@@ -32,7 +32,7 @@ body, html {
 }
 
 .messages {
-    height: 80vh;
+    height: 70vh;
     overflow-y: scroll; 
 }
 
