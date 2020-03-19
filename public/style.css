@@ -5,7 +5,10 @@ body, html {
 
 .container {
     margin: auto;
+    top: 50%;
+    transform: translateY(-50%);
 }
+
 
 
 .message {
@@ -34,5 +37,6 @@ body, html {
 }
 
 #icon {
-    width: 20%;
+    min-width: 100px;
+    width: 30%;
 }
